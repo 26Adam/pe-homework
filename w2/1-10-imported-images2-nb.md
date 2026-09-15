@@ -5,16 +5,12 @@ jupytext:
   text_representation:
     extension: .md
     format_name: myst
+    format_version: 0.13
+    jupytext_version: 1.19.5
 kernelspec:
   display_name: Python 3 (ipykernel)
   language: python
   name: python3
-language_info:
-  name: python
-  pygments_lexer: ipython3
-  nbconvert_exporter: python
-nbhosting:
-  title: suite du TP simple avec des images
 ---
 
 # TP images (2/2)
@@ -81,6 +77,7 @@ colors = [
 [255, 255, 0],
 [255, 0, 255],
 ]
+#test
 ```
 
 après quoi on appellerait la fonction `patchwork` - que vous allez devoir écrire - comme ceci:
@@ -350,8 +347,6 @@ et dont voici un exemple d'utilisation:
 ````
 
 ```{code-cell} ipython3
-:scrolled: true
-
 # exemple de produit de matrices avec `numpy.dot`
 # le help(np.dot) dit: dot(A, B)[i,j,k,m] = sum(A[i,j,:] * B[k,:,m])
 
