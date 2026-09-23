@@ -77,7 +77,6 @@ colors = [
 [255, 255, 0],
 [255, 0, 255],
 ]
-#test
 ```
 
 après quoi on appellerait la fonction `patchwork` - que vous allez devoir écrire - comme ceci:
@@ -138,12 +137,13 @@ on obtiendrait cette fois (observez la taille en pixels de l'image)
 # votre code
 
 def rectangle_size(n):
-    """
-    return a tuple (lines, cols) for
-    the smallest rectangle that contains n cells
-    """
-    # your code goes here...
-    ...
+    a = int(np.sqrt(n))
+    b = 0
+    while a*b<n:
+        b+=1
+    return (a,b)
+for i in range(18):
+    print(rectangle_size(i))
 ```
 
 2. écrivez la fonction `patchwork` telle que décrite en préambule
@@ -162,27 +162,23 @@ def rectangle_size(n):
 # votre code 
 
 def patchwork(colors, side=10, background=[169, 169, 169]):
-    """
-    - colors is expected to be a list of n colors; it can be either
-      * a list like e.g. [[255, 0, 0], [0, 255, 0], ... ]
-      * or a numpy array of shape n, 3
-    - side is the "width" of each square
-    - optional background it used to pad the rest of the image when
-      the <n> colors are not enough to fill a rectangle
-      here we use DarkGray as the default
-    """
-    # your code here
-    ...
+    n = len(colors)
+    (l, c) = rectangle_size(n)
+    im = np.full((l*side,c*side,3),background,dtype=np.uint8)
+    for i in range(n):
+        ligne = i//c
+        colonne = i%c
+        im[ligne*side:(ligne+1)*side, colonne*side:(colonne+1)*side]=colors[i]
+    return im
 ```
 
 ```{code-cell} ipython3
 # si vous voulez tester
-# plt.imshow(patchwork(colors));
+plt.imshow(patchwork(colors));
 ```
 
 ```{code-cell} ipython3
-# si vous voulez tester
-# plt.imshow(patchwork(colors+colors, side=10, background=[0, 0, 0]))
+plt.imshow(patchwork(colors+colors, side=10, background=[0, 0, 0]))
 ```
 
 ### v2 (optionnel)
@@ -230,14 +226,14 @@ pour obtenir ceci
 1. lisez le fichier des couleurs en `Python`, et rangez cela dans la structure de données qui vous semble adéquate.
 
 ```{code-cell} ipython3
-# votre code
+plt.imread(rgb_codes.txt) # je n'arrive pas à lire le fichier
 ```
 
 2. Affichez, à partir de votre structure, les valeurs rgb entières des couleurs suivantes  
 `'Red'`, `'Lime'`, `'Blue'`
 
 ```{code-cell} ipython3
-# votre code
+
 ```
 
 3. Faites une fonction `patchwork2` qui fait ce qu'on veut
@@ -369,13 +365,19 @@ print(f"et le nombre de termes dans chaque `sum()` est {A.shape[-1]} == {B.shape
 1. Faites une fonction `sepia` qui prend en argument une image RGB et rend une image RGB sépia
 
 ```{code-cell} ipython3
-# votre code
+def sepia(im):
+    mat_chgt_sepia = np.array([[0.393, 0.769, 0.189],[0.349, 0.686, 0.168],[0.272, 0.534, 0.131]])
+    im_float = im.astype(float)
+    im_finale = np.dot(im_float, mat_chgt_sepia)
+    return im_finale.astype(np.uint8)
 ```
 
 2. Passez l'image `data/les-mines.jpg` en sépia
 
 ```{code-cell} ipython3
-# votre code
+im = plt.imread("les-mines.jpg")
+im_finale = sepia(im)
+plt.imshow(im_finale);
 ```
 
 Voici ce que vous devriez obtenir avec l'images des Mines
