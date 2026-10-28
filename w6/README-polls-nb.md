@@ -4,6 +4,8 @@ jupytext:
   text_representation:
     extension: .md
     format_name: myst
+    format_version: 0.13
+    jupytext_version: 1.19.5
 kernelspec:
   display_name: Python 3 (ipykernel)
   language: python
@@ -45,6 +47,8 @@ load this file into a dataframe `df`; make sure to
 :tags: [level_basic]
 
 # your code
+df = pd.read_csv("data/DATA.csv")
+df["date"] = pd.to_datetime(df["date"])
 ```
 
 ## 2. plotting
@@ -61,6 +65,7 @@ In other words, you should obtain something like this - we will arbitrarily focu
 :tags: [level_basic]
 
 # your code
+df[df["date"].dt.year == 2024].groupby(["date","candidate"])['pct_estimate'].mean().unstack().plot()
 ```
 
 ## 3. use interactivity
@@ -73,7 +78,15 @@ using the interactive view (if under Jupyter Lab) make sure to use `%matplotlib 
 :tags: [level_basic]
 
 # your answer in english - as a comment
-# ...
+#biden 2024-07-20
+#harris 2024-07-26
+%matplotlib ipympl
+df_2024 = df[df["date"].dt.year == 2024]
+fig, ax = plt.subplots(figsize=(14, 7))
+for candidate, data in df_2024.groupby("candidate"):
+    data = data.sort_values("date")
+    ax.plot(data["date"], data["pct_estimate"], label=candidate)
+plt.show()
 ```
 
 also write a line of code to compute this second date
@@ -81,9 +94,8 @@ also write a line of code to compute this second date
 ```{code-cell} ipython3
 :tags: [level_basic]
 
-# your code
-
-first_harris_date = ...
+harris = df[df["candidate"].str.contains("Harris")]
+first_harris_date = harris["date"].min()
 ```
 
 ## 4. race end
@@ -97,13 +109,17 @@ from this part we will focus on the period after `first_harris_date`
 :tags: [level_basic]
 
 # your code
+df2 = df[df["date"] >= first_harris_date].copy()
+print(df2["candidate"].nunique()) #3
+
+print(df2["candidate"].value_counts()) #les plus famous sont kamala et trump
+
+# 900 et 900
 ```
 
 ## 5: loading shapefiles with geopandas
 
 ```{code-cell} ipython3
-# here's the typical nickname for geopandas
-
 import geopandas as gpd
 ```
 
@@ -121,6 +137,8 @@ gdf = gpd.read_file("data/us-states.zip")
 :tags: [level_basic]
 
 # your code
+print(len(gdf)) #52
+print(gdf.dtypes)
 ```
 
 2. what are the various column types
@@ -150,8 +168,6 @@ more details on this topic can be found here:
 
 ```{code-cell} ipython3
 import altair as alt
-
-# this is for rendering altair charts within the notebook
 alt.renderers.enable("html")
 ```
 
@@ -162,14 +178,7 @@ Here are a few examples of what we can do with this library
 ### the simplest chart
 
 ```{code-cell} ipython3
-# to show a geographic map from that geo-df
-# (suboptimal, we'll improve that...)
-
-# we could just write this and it would render
-# alt.Chart(gdf).mark_geoshape()
-
-# but we can also this more usual form
-
+alt.Chart(gdf).mark_geoshape()
 chart = (
     alt.Chart(gdf)
     .mark_geoshape()
@@ -185,12 +194,6 @@ chart.display()
 now in terms of presentation, it is a little suboptimal, let's improve this a bit
 
 ```{code-cell} ipython3
-# we can improve by:
-# (1) setting a width
-# (2) using the albersUsa projection, which puts Alaska and Hawai under mainland
-#     this way we use space more effectively
-# NOTE that in the process Alaska is artificially shrunk down
-#      it's actually the largest US state
 (
     alt.Chart(gdf)
     .mark_geoshape()
@@ -293,6 +296,7 @@ in this following we will produce a summary map, which looks like this:
 :tags: [level_basic]
 
 # your code
+len(harris.state.value_counts()) #21
 ```
 
 2. for this data, compute a table with the state as index, and the two contestants polls (averaged)
@@ -301,6 +305,9 @@ in this following we will produce a summary map, which looks like this:
 :tags: [level_basic]
 
 # your code
+states_with_data = sorted(df2.loc[df2["state"].notna()&(df2["state"] != "US"),"state"].unique())
+state_polls = (df2[df2["state"].isin(states_with_data)&df2["candidate"].isin(most_famous)].groupby(["state", "candidate"])["pct_estimate"].mean().unstack())
+print(state_polls.head())
 ```
 
 3. using what you've seen in the digression, and what you will gather if needed on the Internet,  produce the above map
@@ -309,6 +316,8 @@ in this following we will produce a summary map, which looks like this:
 :tags: [level_basic]
 
 # your code
+#to_draw=pivot.merge(gdf, left_index=True, right_on="NAME")
+#(to_draw.Chart(gdf).mark_geoshape().encode().properties(width=600).project('albertUsa')) non abouti
 ```
 
 ## 7. outlining swing states
@@ -346,6 +355,14 @@ SWING_STATES = [
 :tags: [level_basic]
 
 # your code
+map_df = gdf.reset_index(drop=True).copy()
+polls_for_map = state_polls.reset_index()
+map_df = map_df.merge(polls_for_map,left_on="NAME",right_on="state",how="left")
+map_df["margin"] = (map_df["Harris"] - map_df["Trump"])
+base_map = (alt.Chart(map_df).mark_geoshape().encode(color=alt.Color("margin:Q")))
+swing_outline = (alt.Chart(map_df).transform_filter(alt.FieldOneOfPredicate(field="NAME",oneOf=SWING_STATES)).mark_geoshape(stroke="black",strokeWidth=2))
+chart = ((base_map + swing_outline))
+chart.display()
 ```
 
 ## 8. filling gaps (optional)
